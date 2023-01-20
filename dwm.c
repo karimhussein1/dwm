@@ -40,7 +40,6 @@
 #include <X11/extensions/Xinerama.h>
 #endif /* XINERAMA */
 #include <X11/Xft/Xft.h>
-#include <fribidi.h>
 
 #include "drw.h"
 #include "util.h"
@@ -166,7 +165,6 @@ struct Systray {
 };
 
 /* function declarations */
-static void applyrules(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
 static void arrange(Monitor *m);
 static void arrangemon(Monitor *m);
@@ -275,7 +273,6 @@ static void zoom(const Arg *arg);
 static Systray *systray = NULL;
 static const char broken[] = "broken";
 static char stext[256];
-static char fribidi_text[BUFSIZ] = "";
 static int screen;
 static int sw, sh;           /* X display screen geometry width, height */
 static int bh, blw = 0;      /* bar geometry */
@@ -323,63 +320,6 @@ struct Pertag {
 
 /* compile-time check if all tags fit into an unsigned int bit array. */
 struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
-
-/* function implementations */
-static void
-apply_fribidi(char *str)
-{
-        FriBidiStrIndex len = strlen(str);
-        FriBidiChar logical[BUFSIZ];
-        FriBidiChar visual[BUFSIZ];
-        FriBidiParType base = FRIBIDI_PAR_ON;
-        FriBidiCharSet charset;
-        fribidi_boolean result;
-    
-        fribidi_text[0] = 0;
-        if (len>0)
-        {
-                charset = fribidi_parse_charset("UTF-8");
-                len = fribidi_charset_to_unicode(charset, str, len, logical);
-                result = fribidi_log2vis(logical, len, &base, visual, NULL, NULL, NULL);
-                len = fribidi_unicode_to_charset(charset, visual, len, fribidi_text);
-        }
-}
-
-void
-applyrules(Client *c)
-{
-	const char *class, *instance;
-	unsigned int i;
-	const Rule *r;
-	Monitor *m;
-	XClassHint ch = { NULL, NULL };
-
-	/* rule matching */
-	c->isfloating = 0;
-	c->tags = 0;
-	XGetClassHint(dpy, c->win, &ch);
-	class    = ch.res_class ? ch.res_class : broken;
-	instance = ch.res_name  ? ch.res_name  : broken;
-
-	for (i = 0; i < LENGTH(rules); i++) {
-		r = &rules[i];
-		if ((!r->title || strstr(c->name, r->title))
-		&& (!r->class || strstr(class, r->class))
-		&& (!r->instance || strstr(instance, r->instance)))
-		{
-			c->isfloating = r->isfloating;
-			c->tags |= r->tags;
-			for (m = mons; m && m->num != r->monitor; m = m->next);
-			if (m)
-				c->mon = m;
-		}
-	}
-	if (ch.res_class)
-		XFree(ch.res_class);
-	if (ch.res_name)
-		XFree(ch.res_name);
-	c->tags = c->tags & TAGMASK ? c->tags & TAGMASK : c->mon->tagset[c->mon->seltags];
-}
 
 int
 applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact)
@@ -1214,7 +1154,6 @@ manage(Window w, XWindowAttributes *wa)
 		c->tags = t->tags;
 	} else {
 		c->mon = selmon;
-		applyrules(c);
 	}
 
 	if (c->x + WIDTH(c) > c->mon->mx + c->mon->mw)

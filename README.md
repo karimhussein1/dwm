@@ -2,7 +2,6 @@
 - dwm is a window manager for X server on linux
 # Applied Patches
 - [bar height](https://dwm.suckless.org/patches/bar_height/)
-- [Bidirectional text](https://dwm.suckless.org/patches/bidi/)
 - [movestack](https://dwm.suckless.org/patches/movestack/)
 - [pertag](https://dwm.suckless.org/patches/pertag/)
 - [rainbowtags](https://dwm.suckless.org/patches/rainbowtags/)
