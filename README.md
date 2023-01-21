@@ -33,5 +33,5 @@ cd dwm
 sudo make install
 
 ```
-
+then add `exec dwm` to your /etc/X11/xinit/xinitrc file
 
